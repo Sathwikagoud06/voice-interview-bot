@@ -1,38 +1,43 @@
-import os
-import streamlit as st
-import pyttsx3
 import openai
+import streamlit as st
+from gtts import gTTS
+import os
+import tempfile
 
-# Load secret key from environment variable
-openai.api_key = os.environ['OPENAI_API_KEY']
+# Set page title
+st.set_page_config(page_title="Voice Interview Bot", layout="centered")
 
-# Text-to-speech engine
-engine = pyttsx3.init()
+# Title
+st.title("🎙️ AI Voice Interview Bot")
+st.markdown("Ask any interview question and hear my voice-based answer!")
 
-# Streamlit UI setup
-st.set_page_config(page_title="Interview Voice Bot", page_icon="🎤")
-st.title("🎤 AI Interview Voice Bot")
-st.markdown("Ask your interview-style question below. This bot responds as **Sathwika Goud** would in a job interview.")
+# Get API key securely
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
-user_input = st.text_input("💬 Your Question:")
+# System prompt to reflect YOUR personality
+system_prompt = """
+You are Sathwika, an AI enthusiast applying for Home.LLC’s AI Agent Team role.
+Respond in a friendly, thoughtful, and passionate tone. Reflect your real personality and answer as you would in an interview.
+"""
+
+# User input
+user_input = st.text_input("Ask me a question (e.g., What's your #1 superpower?)", "")
 
 if user_input:
+    # Call ChatGPT API
     with st.spinner("Thinking..."):
-        try:
-            # ChatGPT API call
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "You're answering as Sathwika Goud in a job interview. Be thoughtful, confident, and realistic."},
-                    {"role": "user", "content": user_input}
-                ]
-            )
-            reply = response['choices'][0]['message']['content']
-            st.success(reply)
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_input}
+            ]
+        )
+        answer = response['choices'][0]['message']['content']
+        st.write("🗣️", answer)
 
-            # Speak the answer
-            engine.say(reply)
-            engine.runAndWait()
-
-        except Exception as e:
-            st.error(f"❌ Error: {e}")
+        # Generate voice using gTTS
+        tts = gTTS(answer)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
+            tts.save(fp.name)
+            st.audio(fp.name, format='audio/mp3')

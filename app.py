@@ -36,7 +36,8 @@ if user_input:
             }
 
             payload = {
-                "model": "meta-llama/Meta-Llama-3-8B-Instruct",  # Free, fast, reliable
+                "model": "mistralai/Mistral-7B-Instruct-v0.2",
+
                 "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_input}
